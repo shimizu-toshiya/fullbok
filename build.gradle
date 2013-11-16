@@ -38,11 +38,20 @@ apply plugin: 'aws-cloudformation'
 cloudFormation {
 	stackName project.artifactId
 	templateURL "https://${project.templateBucket}.s3.amazonaws.com/${project.artifactId}/${project.artifactId}-${project.version}.template"
+	loopTimeout 1800
 }
 
 task cfnInit << {
 	assert project.hasProperty('keyName'): "keyName parameter is required"
-	cloudFormation.stackParams([KeyName: project.keyName])
+	assert project.hasProperty('availabilityZone'): "availabilityZone parameter is required"
+	assert project.hasProperty('sshFrom'): "sshFrom parameter is required"
+	assert project.hasProperty('slaveCapacity'): "slaveCapacity parameter is required"
+	cloudFormation.stackParams([
+		KeyName: project.keyName,
+		AvailabilityZone: project.availabilityZone,
+		SSHFrom: project.sshFrom,
+		SlaveCapacity: project.slaveCapacity
+	])
 }
 
 awsCfnMigrateStackAndWaitCompleted.mustRunAfter cfnInit

@@ -1,6 +1,420 @@
 {
-  "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "CloudFormation template file.",
-  "Resources" : {
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "JMeter cluster template",
+  "Parameters": {
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern": "[-_ a-zA-Z0-9]*",
+      "ConstraintDescription": "can contain only alphanumeric characters, spaces, dashes and underscores."
+    },
+    "AvailabilityZone": {
+      "Default" : "ap-northeast-1a",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern": "[-_ a-zA-Z0-9]*"
+    },
+    "SSHFrom" : {
+      "Description" : "Lockdown SSH access to the bastion host (default can be accessed from anywhere)",
+      "Type" : "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default" : "0.0.0.0/0",
+      "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription" : "must be a valid CIDR range of the form x.x.x.x/x."
+    },
+    "SlaveCapacity" : {
+      "Description" : "Number of EC2 instances to launch for the jmeter slave.",
+      "Type" : "Number",
+      "MinValue": "1",
+      "Default" : "2"
+    }
+  },
+  "Mappings": {
+    "AWSAmazonLinuxAMI": {
+      "us-east-1":      { "name":"Virginia",   "201303": "ami-3275ee5b", "201309": "ami-35792c5c" },
+      "us-west-2":      { "name":"Oregon",     "201303": "ami-ecbe2adc", "201309": "ami-d03ea1e0" },
+      "us-west-1":      { "name":"California", "201303": "ami-66d1fc23", "201309": "ami-687b4f2d" },
+      "eu-west-1":      { "name":"Ireland",    "201303": "ami-44939930", "201309": "ami-149f7863" },
+      "ap-southeast-1": { "name":"Singapole",  "201303": "ami-aa9ed2f8", "201309": "ami-14f2b946" },
+      "ap-southeast-2": { "name":"Sydney",     "201303": "ami-363eaf0c", "201309": "ami-a148d59b" },
+      "ap-northeast-1": { "name":"Tokyo",      "201303": "ami-173fbf16", "201309": "ami-3561fe34" },
+      "sa-east-1":      { "name":"SaoPaulo",   "201303": "ami-dd6bb0c0", "201309": "ami-9f6ec982" }
+    },
+    "WindowsAMI" : {
+      "us-east-1"      : {"64" : "ami-173d747e" },
+      "us-west-2"      : {"64" : "ami-60dc4350" },
+      "us-west-1"      : {"64" : "ami-a02015e5" },
+      "eu-west-1"      : {"64" : "ami-a63edbd1" },
+      "ap-southeast-1" : {"64" : "ami-268cc774" },
+      "ap-southeast-2" : {"64" : "ami-c99904f3" },
+      "ap-northeast-1" : {"64" : "ami-cddf43cc" },
+      "sa-east-1"      : {"64" : "ami-dfd374c2" }
+    },
+    "StackConfig" : {
+      "VPC"               : { "CIDR" : "10.0.0.0/16" },
+      "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" },
+      "MasterInstance"    : { "InstanceType" : "m1.medium" },
+      "SlaveInstance"     : { "InstanceType" : "m1.small", "SpotPrice": "0.08" }
+    }
+  },
+  "Resources": {
+    "PowerUserRole" : {
+      "Type" : "AWS::IAM::Role",
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Statement": [ {
+            "Effect": "Allow",
+              "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path" : "/",
+        "Policies" :[ {
+          "PolicyName" : "PowerUserPolicy",
+          "PolicyDocument" : {
+            "Statement": [ {
+              "Sid": "PowerUserStmt",
+              "Effect": "Allow",
+              "NotAction": "iam:*",
+              "Resource": "*"
+            } ]
+          }
+        }]
+      }
+    },
+    "PowerUserProfile" : {
+      "Type" : "AWS::IAM::InstanceProfile",
+      "Properties" : {
+        "Path": "/",
+        "Roles" : [ { "Ref" : "PowerUserRole" } ]
+      }
+    },
+
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]},
+        "EnableDnsHostnames" : "true",
+        "InstanceTenancy" : "default",
+        "Tags" : [
+          {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+          {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+    "AttachGateway" : {
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "InternetGatewayId" : {"Ref" : "InternetGateway"}
+      }
+    },
+
+    "PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "DependsOn" : "AttachGateway",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+    "PublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "AttachGateway",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "JMeterSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn" : "AttachGateway",
+      "Properties": {
+        "VpcId": { "Ref": "VPC" },
+        "AvailabilityZone": { "Ref": "AvailabilityZone" },
+        "CidrBlock": { "Fn::FindInMap" : [ "StackConfig", "JMeterSubnet", "CIDR" ]},
+        "Tags" : [
+          {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+
+    "JMeterSubnetRouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "JMeterSubnet" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+
+    "VPCDefaultSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "GroupDescription" : "Allow all communications in VPC",
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "0", "ToPort" : "65535", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} },
+          { "IpProtocol" : "udp", "FromPort" : "0", "ToPort" : "65535", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} },
+          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} }
+        ]
+      }
+    },
+    "SSHSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "GroupDescription" : "Enable SSH access via port 22",
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "22",  "ToPort" : "22",  "CidrIp" : { "Ref" : "SSHFrom" }}
+        ]
+      }
+    },
+    "RDPSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "GroupDescription" : "Enable RDP",
+        "SecurityGroupIngress" : [
+          {"IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" : { "Ref" : "SSHFrom" }}
+        ]
+      }
+    },
+
+    "SlaveFleet" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : [
+          { "Ref" : "AvailabilityZone" }
+        ],
+        "VPCZoneIdentifier" : [
+          { "Ref" : "JMeterSubnet" }
+        ],
+        "LaunchConfigurationName" : { "Ref" : "SlaveInstanceLaunchConfig"  },
+        "MinSize" : { "Ref" : "SlaveCapacity" },
+        "MaxSize" : { "Ref" : "SlaveCapacity" },
+        "DesiredCapacity" : { "Ref" : "SlaveCapacity" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : "JMeterSlave", "PropagateAtLaunch" : "true" },
+          { "Key" : "Network", "Value" : "Public", "PropagateAtLaunch" : "true" }
+        ]
+      }
+    },
+    "SlaveInstanceLaunchConfig"  : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties" : {
+        "InstanceType": { "Fn::FindInMap" : [ "StackConfig", "SlaveInstance", "InstanceType" ]},
+        "KeyName": { "Ref" : "KeyName" },
+        "ImageId": { "Fn::FindInMap": [ "AWSAmazonLinuxAMI", { "Ref": "AWS::Region" }, "201309" ]},
+        "SecurityGroups": [
+          { "Ref" : "SSHSecurityGroup" },
+          { "Ref" : "VPCDefaultSecurityGroup" }
+        ],
+        "IamInstanceProfile": { "Ref" : "PowerUserProfile" },
+        "InstanceMonitoring" : "false",
+        "AssociatePublicIpAddress" : "true",
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#! /bin/bash -v\n",
+          "yum update -y\n",
+
+          "# Helper function\n",
+          "function error_exit\n",
+          "{\n",
+          "  /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", { "Ref" : "SlaveWaitHandle" }, "'\n",
+          "  exit 1\n",
+          "}\n",
+
+          "# Install packages\n",
+          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r SlaveInstanceLaunchConfig ",
+          "    --region ", { "Ref" : "AWS::Region" }, "\n",
+
+          "echo \"/opt/apache-jmeter-2.10/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
+
+          "# All is well so signal success\n",
+          "/opt/aws/bin/cfn-signal -e $? -r \"SlaveInstanceLaunchConfig setup complete\" '", { "Ref" : "SlaveWaitHandle" }, "'\n"
+        ]]}}
+      },
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "packages" : {
+              "yum" : {
+                "java-1.7.0-openjdk-devel" : []
+              }
+            },
+            "sources" : {
+              "/opt" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.tgz"
+            },
+            "command" : {
+              "00-use_java7" : {
+                "command" : "alternatives --set java /usr/lib/jvm/jre-1.7.0-openjdk.x86_64/bin/java"
+              },
+              "01-create_hosts_entry-on_boot" : {
+                "command" : "echo \"`curl -s curl http://169.254.169.254/latest/meta-data/local-ipv4` `hostname`\" >>/etc/hosts",
+                "test" : "test ! -f .create_hosts_entry-semaphore"
+              },
+              "02-signal_startup_complete" : {
+                "command" : "touch .create_hosts_entry-semaphore"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SlaveWaitHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+    "SlaveWaitCondition" : {
+      "Type" : "AWS::CloudFormation::WaitCondition",
+      "DependsOn" : "SlaveFleet",
+      "Properties" : {
+        "Handle" : {"Ref" : "SlaveWaitHandle"},
+        "Timeout" : "3600",
+        "Count"   : { "Ref" : "SlaveCapacity" }
+      }
+    },
+
+    "MasterInstance": {
+      "Type" : "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType" : { "Fn::FindInMap" : [ "StackConfig", "MasterInstance", "InstanceType" ]},
+        "ImageId" : { "Fn::FindInMap": [ "WindowsAMI", { "Ref": "AWS::Region" }, "64" ]},
+        "NetworkInterfaces": [{
+          "DeviceIndex" : "0",
+          "AssociatePublicIpAddress" : true,
+          "DeleteOnTermination" : true,
+          "SubnetId" : { "Ref" : "JMeterSubnet" },
+          "GroupSet" : [
+            { "Ref" : "RDPSecurityGroup" },
+            { "Ref" : "VPCDefaultSecurityGroup" }
+          ]
+        }],
+        "KeyName" : { "Ref" : "KeyName" },
+        "IamInstanceProfile": { "Ref" : "PowerUserProfile" },
+        "Monitoring" : "false",
+        "Tags" : [
+          { "Key" : "Name", "Value" : "JMeterMaster" },
+          { "Key" : "Network", "Value" : "Public" }
+        ],
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+          "<script>\n",
+          "Set-ExecutionPolicy RemoteSigned\n",
+
+          "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, " -r MasterInstance --region ", { "Ref" : "AWS::Region" }, "\n",
+          "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "MasterWaitHandle" }}, "\n",
+
+          "c:\\install_jdk.ps1\n",
+          "c:\\setupjmetercluster.ps1\n",
+          "</script>"
+        ]]}}
+      },
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "sources" : {
+              "c:\\jmeter" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.zip"
+            },
+            "files" : {
+              "c:\\cfn\\cfn-hup.conf" : {
+                "content" : { "Fn::Join" : ["", [
+                  "[main]\n",
+                  "stack=", { "Ref" : "AWS::StackId" }, "\n",
+                  "region=", { "Ref" : "AWS::Region" }, "\n"
+                ]]}
+              },
+              "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                "content": { "Fn::Join" : ["", [
+                  "[cfn-auto-reloader-hook]\n",
+                  "triggers=post.update\n",
+                  "path=Resources.MasterInstance.Metadata.AWS::CloudFormation::Init\n",
+                  "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" },
+                  " -r MasterInstance",
+                  " --region ", { "Ref" : "AWS::Region" }, "\n"
+                ]]}
+              },
+              "c:\\install_jdk.ps1" : {
+                "content": { "Fn::Join" : ["", [
+                  "$client = new-object System.Net.WebClient\n",
+                  "$client.Headers.add(\"Cookie\", \"gpw_e24=http%3A%2F%2Fwww.oracle.com\")\n",
+                  "$client.DownloadFile(\"http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jdk-7u45-windows-x64.exe\", \"C:\\Users\\Administrator\\jdk.exe\")\n",
+                  "C:\\Users\\Administrator\\jdk.exe /s /lang=1041 INSTALLDIR=C:\\java\\jdk1.7.45\n",
+                  "$env:PATH = $env:PATH + \";C:\\java\\jdk1.7.45\\bin\""
+                ]]}
+              },
+              "c:\\setupjmetercluster.ps1" : {
+                "content": { "Fn::Join" : ["", [
+                  "Set-DefaultAWSRegion ", { "Ref" : "AWS::Region" }, "\n",
+                  "$slaves = (Get-ASAutoScalingInstance",
+                  " | ? {$_.AutoScalingGroupName -eq \"", { "Ref" : "SlaveFleet" }, "\"}",
+                  " | select -ExpandProperty InstanceId",
+                  " | Get-EC2Instance",
+                  " | select -ExpandProperty RunningInstance",
+                  " | select -ExpandProperty PrivateIpAddress) -join ','\n",
+                  "(Get-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\")",
+                  " | Foreach-Object {$_ -replace '^remote_hosts=.*$', (\"remote_hosts=\" + $slaves)}",
+                  " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\""
+                ]]}
+              }
+            },
+            "services" : {
+              "windows" : {
+                "cfn-hup" : {
+                  "enabled" : "true",
+                  "ensureRunning" : "true",
+                  "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "MasterWaitHandle" : {
+      "Type" : "AWS::CloudFormation::WaitConditionHandle"
+    },
+    "MasterWaitCondition" : {
+      "Type" : "AWS::CloudFormation::WaitCondition",
+      "DependsOn" : "MasterInstance",
+      "Properties" : {
+        "Handle" : {"Ref" : "MasterWaitHandle"},
+        "Timeout" : "3600"
+      }
+    }
+  },
+
+  "Outputs": {
+    "SSHToSlaveInstances": {
+      "Value": { "Fn::Join":["", [
+        "ssh -i /path/to/", { "Ref": "KeyName" }, ".pem ec2-user@<ip/hostname>"
+      ]]},
+      "Description": "SSH command to connect to the JMeter slave instances."
+    },
+    "RDPToMasterInstance": {
+      "Value": { "Fn::Join":["", [
+        "remotedesktop://", { "Fn::GetAtt" : [ "MasterInstance", "PublicDnsName" ]}
+      ]]},
+      "Description": "RDP connection to the JMeter master."
+    }
   }
 }
