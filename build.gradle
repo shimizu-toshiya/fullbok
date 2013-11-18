@@ -25,12 +25,14 @@ aws {
 
 // ======== release tasks ========
 
-task deploy(type: jp.classmethod.aws.gradle.s3.AmazonS3FileUploadTask) {
+task uploadTemplate(type: jp.classmethod.aws.gradle.s3.AmazonS3FileUploadTask) {
 	bucketName project.templateBucket
 	key "${project.artifactId}/${project.artifactId}-${version}.template"
 	file file("${project.artifactId}.template")
 	overwrite project.version.endsWith('-SNAPSHOT')
 }
+
+task uploadArchives(dependsOn: [uploadTemplate])
 
 // ======== demo tasks ========
 
