@@ -318,15 +318,13 @@
           { "Key" : "Network", "Value" : "Public" }
         ],
         "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
-          "<script>\n",
-          "Set-ExecutionPolicy RemoteSigned\n",
-
+          "<powershell>\n",
           "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, " -r MasterInstance --region ", { "Ref" : "AWS::Region" }, "\n",
-          "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "MasterWaitHandle" }}, "\n",
+          "cfn-signal.exe -e $lastexitcode ", { "Fn::Base64" : { "Ref" : "MasterWaitHandle" }}, "\n",
 
           "c:\\install_jdk.ps1\n",
           "c:\\setupjmetercluster.ps1\n",
-          "</script>"
+          "</powershell>"
         ]]}}
       },
       "Metadata" : {
