@@ -4,7 +4,7 @@ buildscript {
 		maven { url 'http://public-maven.classmethod.info/release' }
 	}
 	dependencies {
-		classpath 'jp.classmethod.aws:gradle-aws-plugin:0.3'
+		classpath 'jp.classmethod.aws:gradle-aws-plugin:0.5'
 	}
 }
 
@@ -32,26 +32,34 @@ task uploadTemplate(type: jp.classmethod.aws.gradle.s3.AmazonS3FileUploadTask) {
 	overwrite project.version.endsWith('-SNAPSHOT')
 }
 
-task uploadArchives(dependsOn: [uploadTemplate])
+task uploadDemoTemplate(type: jp.classmethod.aws.gradle.s3.AmazonS3FileUploadTask) {
+	bucketName project.templateBucket
+	key "${project.artifactId}/${project.artifactId}-demo-${version}.template"
+	file file("${project.artifactId}-demo.template")
+	overwrite project.version.endsWith('-SNAPSHOT')
+}
+
+task uploadArchives(dependsOn: [uploadTemplate, uploadDemoTemplate])
 
 // ======== demo tasks ========
 
 apply plugin: 'aws-cloudformation'
 cloudFormation {
-	stackName project.artifactId
-	templateURL "https://${project.templateBucket}.s3.amazonaws.com/${project.artifactId}/${project.artifactId}-${project.version}.template"
-	loopTimeout 1800
+	stackName "${project.artifactId}-demo"
+	templateURL "https://${project.templateBucket}.s3.amazonaws.com/${project.artifactId}/${project.artifactId}-demo-${project.version}.template"
+	capabilityIam true
 }
+
+awsCfnWaitStackReady.loopTimeout 3600
+awsCfnWaitStackComplete.loopTimeout 3600
 
 task cfnInit << {
 	assert project.hasProperty('keyName'): "keyName parameter is required"
-	assert project.hasProperty('availabilityZone'): "availabilityZone parameter is required"
-	assert project.hasProperty('sshFrom'): "sshFrom parameter is required"
+	assert project.hasProperty('targetCapacity'): "targetCapacity parameter is required"
 	assert project.hasProperty('slaveCapacity'): "slaveCapacity parameter is required"
 	cloudFormation.stackParams([
 		KeyName: project.keyName,
-		AvailabilityZone: project.availabilityZone,
-		SSHFrom: project.sshFrom,
+		TargetCapacity: project.targetCapacity,
 		SlaveCapacity: project.slaveCapacity
 	])
 }

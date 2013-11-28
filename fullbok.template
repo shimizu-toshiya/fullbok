@@ -12,25 +12,66 @@
     },
     "AvailabilityZone": {
       "Default" : "ap-northeast-1a",
+      "Description" : "Availability zone of Jmeter subnet.",
       "Type": "String",
       "MinLength": "1",
       "MaxLength": "64",
       "AllowedPattern": "[-_ a-zA-Z0-9]*"
     },
     "SSHFrom" : {
-      "Description" : "Lockdown SSH access to the bastion host (default can be accessed from anywhere)",
+      "Default" : "0.0.0.0/0",
+      "Description" : "Lockdown SSH/RDP access to the bastion host (default can be accessed from anywhere)",
       "Type" : "String",
       "MinLength": "9",
       "MaxLength": "18",
-      "Default" : "0.0.0.0/0",
       "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription" : "must be a valid CIDR range of the form x.x.x.x/x."
     },
     "SlaveCapacity" : {
+      "Default" : "2",
       "Description" : "Number of EC2 instances to launch for the jmeter slave.",
       "Type" : "Number",
-      "MinValue": "1",
-      "Default" : "2"
+      "MinValue": "1"
+    },
+    "MasterInstanceType": {
+      "Default": "m1.medium",
+      "Description": "JMeter master EC2 instance type",
+      "Type": "String",
+      "AllowedValues": [
+        "m3.xlarge", "m3.2xlarge",
+        "m1.small", "m1.medium", "m1.large", "m1.xlarge",
+        "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
+        "c1.xlarge",
+        "cc2.8xlarge",
+        "m2.xlarge", "m2.2xlarge", "m2.4xlarge",
+        "cr1.8xlarge",
+        "hi1.4xlarge",
+        "hs1.8xlarge",
+        "t1.micro",
+        "g2.2xlarge",
+        "cg1.4xlarge"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+    "SlaveInstanceType": {
+      "Default": "m1.small",
+      "Description": "JMeter slave EC2 instance type",
+      "Type": "String",
+      "AllowedValues": [
+        "m3.xlarge", "m3.2xlarge",
+        "m1.small", "m1.medium", "m1.large", "m1.xlarge",
+        "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
+        "c1.xlarge",
+        "cc2.8xlarge",
+        "m2.xlarge", "m2.2xlarge", "m2.4xlarge",
+        "cr1.8xlarge",
+        "hi1.4xlarge",
+        "hs1.8xlarge",
+        "t1.micro",
+        "g2.2xlarge",
+        "cg1.4xlarge"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
     }
   },
   "Mappings": {
@@ -45,20 +86,18 @@
       "sa-east-1":      { "name":"SaoPaulo",   "201303": "ami-dd6bb0c0", "201309": "ami-9f6ec982" }
     },
     "WindowsAMI" : {
-      "us-east-1"      : {"64" : "ami-173d747e" },
-      "us-west-2"      : {"64" : "ami-60dc4350" },
-      "us-west-1"      : {"64" : "ami-a02015e5" },
-      "eu-west-1"      : {"64" : "ami-a63edbd1" },
-      "ap-southeast-1" : {"64" : "ami-268cc774" },
-      "ap-southeast-2" : {"64" : "ami-c99904f3" },
-      "ap-northeast-1" : {"64" : "ami-cddf43cc" },
-      "sa-east-1"      : {"64" : "ami-dfd374c2" }
+      "us-east-1"      : { "64" : "ami-173d747e" },
+      "us-west-2"      : { "64" : "ami-60dc4350" },
+      "us-west-1"      : { "64" : "ami-a02015e5" },
+      "eu-west-1"      : { "64" : "ami-a63edbd1" },
+      "ap-southeast-1" : { "64" : "ami-268cc774" },
+      "ap-southeast-2" : { "64" : "ami-c99904f3" },
+      "ap-northeast-1" : { "64" : "ami-cddf43cc" },
+      "sa-east-1"      : { "64" : "ami-dfd374c2" }
     },
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
-      "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" },
-      "MasterInstance"    : { "InstanceType" : "m1.medium" },
-      "SlaveInstance"     : { "InstanceType" : "m1.small", "SpotPrice": "0.08" }
+      "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" }
     }
   },
   "Resources": {
@@ -159,7 +198,6 @@
         ]
       }
     },
-
     "JMeterSubnetRouteTableAssociation" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
@@ -167,7 +205,6 @@
         "RouteTableId" : { "Ref" : "PublicRouteTable" }
       }
     },
-
 
     "VPCDefaultSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
@@ -177,7 +214,7 @@
         "SecurityGroupIngress" : [
           { "IpProtocol" : "tcp", "FromPort" : "0", "ToPort" : "65535", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} },
           { "IpProtocol" : "udp", "FromPort" : "0", "ToPort" : "65535", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} },
-          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} }
+          { "IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1",  "CidrIp" : { "Fn::FindInMap" : [ "StackConfig", "VPC", "CIDR" ]} }
         ]
       }
     },
@@ -224,7 +261,7 @@
     "SlaveInstanceLaunchConfig"  : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
       "Properties" : {
-        "InstanceType": { "Fn::FindInMap" : [ "StackConfig", "SlaveInstance", "InstanceType" ]},
+        "InstanceType": { "Ref" : "SlaveInstanceType" },
         "KeyName": { "Ref" : "KeyName" },
         "ImageId": { "Fn::FindInMap": [ "AWSAmazonLinuxAMI", { "Ref": "AWS::Region" }, "201309" ]},
         "SecurityGroups": [
@@ -246,7 +283,7 @@
           "}\n",
 
           "# Install packages\n",
-          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r SlaveInstanceLaunchConfig ",
+          "/opt/aws/bin/cfn-init -v -s ", { "Ref" : "AWS::StackId" }, " -r SlaveInstanceLaunchConfig ",
           "    --region ", { "Ref" : "AWS::Region" }, "\n",
 
           "echo \"/opt/apache-jmeter-2.10/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
@@ -266,7 +303,7 @@
             "sources" : {
               "/opt" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.tgz"
             },
-            "command" : {
+            "commands" : {
               "00-use_java7" : {
                 "command" : "alternatives --set java /usr/lib/jvm/jre-1.7.0-openjdk.x86_64/bin/java"
               },
@@ -276,6 +313,11 @@
               },
               "02-signal_startup_complete" : {
                 "command" : "touch .create_hosts_entry-semaphore"
+              },
+              "03-set_listen_address" : {
+                "command" : { "Fn::Join" : ["", [
+                  "sed -i -e \"s/^#RMI_HOST_DEF=-Djava.rmi.server.hostname=.*$/RMI_HOST_DEF=-Djava.rmi.server.hostname=$(curl -s http://169.254.169.254/latest/meta-data/local-hostname)/\" /opt/apache-jmeter-2.10/bin/jmeter-server"
+                ]]}
               }
             }
           }
@@ -298,7 +340,7 @@
     "MasterInstance": {
       "Type" : "AWS::EC2::Instance",
       "Properties": {
-        "InstanceType" : { "Fn::FindInMap" : [ "StackConfig", "MasterInstance", "InstanceType" ]},
+        "InstanceType" : { "Ref" : "MasterInstanceType" },
         "ImageId" : { "Fn::FindInMap": [ "WindowsAMI", { "Ref": "AWS::Region" }, "64" ]},
         "NetworkInterfaces": [{
           "DeviceIndex" : "0",
@@ -319,20 +361,27 @@
         ],
         "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
           "<powershell>\n",
-          "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, " -r MasterInstance --region ", { "Ref" : "AWS::Region" }, "\n",
+          "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, " -r MasterInstance -c create --region ", { "Ref" : "AWS::Region" }, "\n",
           "cfn-signal.exe -e $lastexitcode ", { "Fn::Base64" : { "Ref" : "MasterWaitHandle" }}, "\n",
-
-          "c:\\install_jdk.ps1\n",
-          "c:\\setupjmetercluster.ps1\n",
           "</powershell>"
         ]]}}
       },
       "Metadata" : {
         "AWS::CloudFormation::Init" : {
-          "config" : {
-            "sources" : {
-              "c:\\jmeter" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.zip"
-            },
+          "configSets" : {
+            "create" : [
+              "setup_cfn_hup",
+              "place_scripts",
+              "install_jdk",
+              "disable_firewall",
+              "install_jmeter",
+              "setup_jmeter"
+            ],
+            "update" : [
+              "setup_jmeter"
+            ]
+          },
+          "setup_cfn_hup" : {
             "files" : {
               "c:\\cfn\\cfn-hup.conf" : {
                 "content" : { "Fn::Join" : ["", [
@@ -346,11 +395,25 @@
                   "[cfn-auto-reloader-hook]\n",
                   "triggers=post.update\n",
                   "path=Resources.MasterInstance.Metadata.AWS::CloudFormation::Init\n",
-                  "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" },
-                  " -r MasterInstance",
-                  " --region ", { "Ref" : "AWS::Region" }, "\n"
+                  "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, " -r MasterInstance -c update --region ", { "Ref" : "AWS::Region" }, "\n"
                 ]]}
-              },
+              }
+            },
+            "services" : {
+              "windows" : {
+                "cfn-hup" : {
+                  "enabled" : "true",
+                  "ensureRunning" : "true",
+                  "files" : [
+                    "c:\\cfn\\cfn-hup.conf",
+                    "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          },
+          "place_scripts" : {
+            "files" : {
               "c:\\install_jdk.ps1" : {
                 "content": { "Fn::Join" : ["", [
                   "$client = new-object System.Net.WebClient\n",
@@ -358,6 +421,15 @@
                   "$client.DownloadFile(\"http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jdk-7u45-windows-x64.exe\", \"C:\\Users\\Administrator\\jdk.exe\")\n",
                   "C:\\Users\\Administrator\\jdk.exe /s /lang=1041 INSTALLDIR=C:\\java\\jdk1.7.45\n",
                   "$env:PATH = $env:PATH + \";C:\\java\\jdk1.7.45\\bin\""
+                ]]}
+              },
+              "c:\\create_shortcut.ps1" : {
+                "content": { "Fn::Join" : ["", [
+                  "$WshShell = New-Object -comObject WScript.Shell\n",
+                  "$shortcut = $WshShell.CreateShortcut(\"C:\\Users\\Administrator\\Desktop\\JMeter.lnk\")\n",
+                  "$shortcut.TargetPath = \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeterw.cmd\"\n",
+                  "$shortcut.WorkingDirectory = \"C:\\jmeter\\apache-jmeter-2.10\\bin\"\n",
+                  "$shortcut.Save()\n"
                 ]]}
               },
               "c:\\setupjmetercluster.ps1" : {
@@ -374,14 +446,41 @@
                   " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\""
                 ]]}
               }
+            }
+          },
+          "install_jdk" : {
+            "commands" : {
+              "install_jdk" : {
+                "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\install_jdk.ps1"
+              }
+            }
+          },
+          "disable_firewall" : {
+            "commands" : {
+              "disable_firewall" : {
+                "command" : "netsh advfirewall set allprofiles state off"
+              }
+            }
+          },
+          "install_jmeter" : {
+            "sources" : {
+              "c:\\jmeter" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.zip"
             },
-            "services" : {
-              "windows" : {
-                "cfn-hup" : {
-                  "enabled" : "true",
-                  "ensureRunning" : "true",
-                  "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
-                }
+            "files" : {
+              "c:\\Users\\Administrator\\Desktop\\basic.jmx" : {
+                "source" : "http://s3-ap-northeast-1.amazonaws.com/cm-miyamoto-public/jmeter/basic.jmx"
+              }
+            }, 
+            "commands" : {
+              "create_shortcut" : {
+                "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\create_shortcut.ps1"
+              }
+            }
+          },
+          "setup_jmeter" : {
+            "commands" : {
+              "setup_jmeter_cluster" : {
+                "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\setupjmetercluster.ps1"
               }
             }
           }
