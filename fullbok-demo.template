@@ -3,7 +3,6 @@
   "Description" : "CloudFormation template file.",
   "Parameters" : {
     "KeyName" : {
-      "Default" : "miyamoto-kp1",
       "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
       "Type" : "String",
       "MinLength" : "1",
@@ -12,18 +11,16 @@
       "ConstraintDescription" : "can contain only alphanumeric characters, spaces, dashes and underscores."
     },
     "TargetCapacity" : {
-      "Default" : "10",
+      "Default" : "2",
       "Description" : "Number of EC2 instances to launch for the jmeter Target.",
       "Type" : "Number",
-      "MinValue": "1",
-      "Default" : "2"
+      "MinValue": "1"
     },
     "SlaveCapacity" : {
-      "Default" : "10",
+      "Default" : "2",
       "Description" : "Number of EC2 instances to launch for the jmeter Slave.",
       "Type" : "Number",
-      "MinValue": "1",
-      "Default" : "2"
+      "MinValue": "2"
     }
   },
   "Mappings" : {
@@ -261,13 +258,13 @@
                 "group"  : "apache"
               },
               "/var/www/html/info.php" : {
-                "content" : "<?php phpinfo(); ?>",
+                "content" : "<?php phpinfo();",
                 "mode"   : "000644",
                 "owner"  : "apache",
                 "group"  : "apache"
               },
               "/var/www/html/wait.php" : {
-                "content" : "<?php usleep($_GET['time']); echo \"wait complete.\".$_GET['time']; ?>",
+                "content" : "<?php usleep($_GET['time']); echo \"wait complete.\".$_GET['time'];",
                 "mode"   : "000644",
                 "owner"  : "apache",
                 "group"  : "apache"
