@@ -466,11 +466,6 @@
             "sources" : {
               "c:\\jmeter" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.zip"
             },
-            "files" : {
-              "c:\\Users\\Administrator\\Desktop\\basic.jmx" : {
-                "source" : "http://s3-ap-northeast-1.amazonaws.com/cm-miyamoto-public/jmeter/basic.jmx"
-              }
-            }, 
             "commands" : {
               "create_shortcut" : {
                 "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\create_shortcut.ps1"
