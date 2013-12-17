@@ -57,10 +57,12 @@ task cfnInit << {
 	assert project.hasProperty('keyName'): "keyName parameter is required"
 	assert project.hasProperty('targetCapacity'): "targetCapacity parameter is required"
 	assert project.hasProperty('slaveCapacity'): "slaveCapacity parameter is required"
+	assert project.hasProperty('masterInstanceAMI'): "masterInstanceAMI parameter is required"
 	cloudFormation.stackParams([
 		KeyName: project.keyName,
 		TargetCapacity: project.targetCapacity,
-		SlaveCapacity: project.slaveCapacity
+		SlaveCapacity: project.slaveCapacity,
+		MasterInstanceAMI: project.masterInstanceAMI
 	])
 }
 
