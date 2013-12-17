@@ -33,6 +33,13 @@
       "Type" : "Number",
       "MinValue": "1"
     },
+    "MasterInstanceAMI" : {
+      "Description" : "AMI ID of Master instance (Microsoft Windows Server 2012 RTM 64-bit)",
+      "Type" : "String",
+      "MinLength": "12",
+      "MaxLength": "12",
+      "AllowedPattern" : "ami-[a-zA-Z0-9]*"
+    },
     "MasterInstanceType": {
       "Default": "m1.medium",
       "Description": "JMeter master EC2 instance type",
@@ -84,16 +91,6 @@
       "ap-southeast-2": { "name":"Sydney",     "201303": "ami-363eaf0c", "201309": "ami-a148d59b" },
       "ap-northeast-1": { "name":"Tokyo",      "201303": "ami-173fbf16", "201309": "ami-3561fe34" },
       "sa-east-1":      { "name":"SaoPaulo",   "201303": "ami-dd6bb0c0", "201309": "ami-9f6ec982" }
-    },
-    "WindowsAMI" : {
-      "us-east-1"      : { "64" : "ami-173d747e" },
-      "us-west-2"      : { "64" : "ami-60dc4350" },
-      "us-west-1"      : { "64" : "ami-a02015e5" },
-      "eu-west-1"      : { "64" : "ami-a63edbd1" },
-      "ap-southeast-1" : { "64" : "ami-268cc774" },
-      "ap-southeast-2" : { "64" : "ami-c99904f3" },
-      "ap-northeast-1" : { "64" : "ami-cddf43cc" },
-      "sa-east-1"      : { "64" : "ami-dfd374c2" }
     },
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
@@ -341,7 +338,7 @@
       "Type" : "AWS::EC2::Instance",
       "Properties": {
         "InstanceType" : { "Ref" : "MasterInstanceType" },
-        "ImageId" : { "Fn::FindInMap": [ "WindowsAMI", { "Ref": "AWS::Region" }, "64" ]},
+        "ImageId" : { "Ref": "MasterInstanceAMI" },
         "NetworkInterfaces": [{
           "DeviceIndex" : "0",
           "AssociatePublicIpAddress" : true,

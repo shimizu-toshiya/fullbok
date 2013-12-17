@@ -21,6 +21,13 @@
       "Description" : "Number of EC2 instances to launch for the jmeter Slave.",
       "Type" : "Number",
       "MinValue": "2"
+    },
+    "MasterInstanceAMI" : {
+      "Description" : "AMI ID of Master instance (Microsoft Windows Server 2012 RTM 64-bit)",
+      "Type" : "String",
+      "MinLength": "12",
+      "MaxLength": "12",
+      "AllowedPattern" : "ami-[a-zA-Z0-9]*"
     }
   },
   "Mappings" : {
@@ -305,14 +312,15 @@
       "Type" : "AWS::CloudFormation::Stack",
       "DependsOn" : "AttachGateway",
       "Properties" : {
-        "TemplateURL" : "https://cm-public-cfn-templates.s3.amazonaws.com/fullbok/fullbok-1.0.template",
+        "TemplateURL" : "https://cm-public-cfn-templates.s3.amazonaws.com/fullbok/fullbok-1.1.template",
          "Parameters" : {
            "KeyName": { "Ref": "KeyName" },
            "AvailabilityZone": { "Fn::FindInMap": [ "AZ", { "Ref": "AWS::Region" }, "primary" ]},
            "SSHFrom": "0.0.0.0/0",
            "SlaveCapacity": { "Ref": "SlaveCapacity" },
            "MasterInstanceType": "m1.medium",
-           "SlaveInstanceType": "m1.small"
+           "SlaveInstanceType": "m1.small",
+           "MasterInstanceAMI": { "Ref": "MasterInstanceAMI" }
          }
       }
     }
