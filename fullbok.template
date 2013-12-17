@@ -27,11 +27,12 @@
       "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription" : "must be a valid CIDR range of the form x.x.x.x/x."
     },
-    "SlaveCapacity" : {
-      "Default" : "2",
-      "Description" : "Number of EC2 instances to launch for the jmeter slave.",
-      "Type" : "Number",
-      "MinValue": "1"
+    "MasterInstanceAMI" : {
+      "Description" : "AMI ID of Master instance (Microsoft Windows Server 2012 RTM 64-bit)",
+      "Type" : "String",
+      "MinLength": "12",
+      "MaxLength": "12",
+      "AllowedPattern" : "ami-[a-zA-Z0-9]*"
     },
     "MasterInstanceType": {
       "Default": "m1.medium",
@@ -72,6 +73,17 @@
         "cg1.4xlarge"
       ],
       "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+    "SlaveCapacity" : {
+      "Default" : "2",
+      "Description" : "Number of EC2 instances to launch for the jmeter slave.",
+      "Type" : "Number",
+      "MinValue": "1"
+    },
+    "SlaveSpotPrice" : {
+      "Default" : "0",
+      "Description" : "Spot price for the jmeter slave.",
+      "Type" : "Number"
     }
   },
   "Mappings": {
@@ -85,20 +97,13 @@
       "ap-northeast-1": { "name":"Tokyo",      "201303": "ami-173fbf16", "201309": "ami-3561fe34" },
       "sa-east-1":      { "name":"SaoPaulo",   "201303": "ami-dd6bb0c0", "201309": "ami-9f6ec982" }
     },
-    "WindowsAMI" : {
-      "us-east-1"      : { "64" : "ami-173d747e" },
-      "us-west-2"      : { "64" : "ami-60dc4350" },
-      "us-west-1"      : { "64" : "ami-a02015e5" },
-      "eu-west-1"      : { "64" : "ami-a63edbd1" },
-      "ap-southeast-1" : { "64" : "ami-268cc774" },
-      "ap-southeast-2" : { "64" : "ami-c99904f3" },
-      "ap-northeast-1" : { "64" : "ami-cddf43cc" },
-      "sa-east-1"      : { "64" : "ami-dfd374c2" }
-    },
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
       "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" }
     }
+  },
+  "Conditions" : {
+    "UseSpotInstance" : { "Fn::Not": [ { "Fn::Equals" : [ {"Ref" : "SlaveSpotPrice"}, "0" ] } ] }
   },
   "Resources": {
     "PowerUserRole" : {
@@ -262,6 +267,7 @@
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
       "Properties" : {
         "InstanceType": { "Ref" : "SlaveInstanceType" },
+        "SpotPrice" : { "Fn::If" : [ "UseSpotInstance", {"Ref" : "SlaveSpotPrice"},  { "Ref" : "AWS::NoValue" } ] },
         "KeyName": { "Ref" : "KeyName" },
         "ImageId": { "Fn::FindInMap": [ "AWSAmazonLinuxAMI", { "Ref": "AWS::Region" }, "201309" ]},
         "SecurityGroups": [
@@ -341,7 +347,7 @@
       "Type" : "AWS::EC2::Instance",
       "Properties": {
         "InstanceType" : { "Ref" : "MasterInstanceType" },
-        "ImageId" : { "Fn::FindInMap": [ "WindowsAMI", { "Ref": "AWS::Region" }, "64" ]},
+        "ImageId" : { "Ref": "MasterInstanceAMI" },
         "NetworkInterfaces": [{
           "DeviceIndex" : "0",
           "AssociatePublicIpAddress" : true,

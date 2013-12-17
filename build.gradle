@@ -13,7 +13,7 @@ ext {
 	templateBucket = 'cm-public-cfn-templates'
 }
 
-version = '1.0'
+version = '1.1'
 
 apply plugin: 'aws'
 aws {
@@ -57,10 +57,12 @@ task cfnInit << {
 	assert project.hasProperty('keyName'): "keyName parameter is required"
 	assert project.hasProperty('targetCapacity'): "targetCapacity parameter is required"
 	assert project.hasProperty('slaveCapacity'): "slaveCapacity parameter is required"
+	assert project.hasProperty('masterInstanceAMI'): "masterInstanceAMI parameter is required"
 	cloudFormation.stackParams([
 		KeyName: project.keyName,
 		TargetCapacity: project.targetCapacity,
-		SlaveCapacity: project.slaveCapacity
+		SlaveCapacity: project.slaveCapacity,
+		MasterInstanceAMI: project.masterInstanceAMI
 	])
 }
 
