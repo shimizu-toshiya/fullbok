@@ -28,6 +28,11 @@
       "MinLength": "12",
       "MaxLength": "12",
       "AllowedPattern" : "ami-[a-zA-Z0-9]*"
+    },
+    "SlaveSpotPrice" : {
+      "Default" : "0",
+      "Description" : "Spot price for the jmeter slave.",
+      "Type" : "Number"
     }
   },
   "Mappings" : {
@@ -317,10 +322,11 @@
            "KeyName": { "Ref": "KeyName" },
            "AvailabilityZone": { "Fn::FindInMap": [ "AZ", { "Ref": "AWS::Region" }, "primary" ]},
            "SSHFrom": "0.0.0.0/0",
-           "SlaveCapacity": { "Ref": "SlaveCapacity" },
            "MasterInstanceType": "m1.medium",
            "SlaveInstanceType": "m1.small",
-           "MasterInstanceAMI": { "Ref": "MasterInstanceAMI" }
+           "MasterInstanceAMI": { "Ref": "MasterInstanceAMI" },
+           "SlaveCapacity": { "Ref": "SlaveCapacity" },
+           "SlaveSpotPrice": { "Ref": "SlaveSpotPrice" }
          }
       }
     }
