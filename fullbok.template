@@ -42,7 +42,7 @@
         "m3.xlarge", "m3.2xlarge",
         "m1.small", "m1.medium", "m1.large", "m1.xlarge",
         "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
-        "c1.xlarge",
+        "c1.medium", "c1.xlarge",
         "cc2.8xlarge",
         "m2.xlarge", "m2.2xlarge", "m2.4xlarge",
         "cr1.8xlarge",
@@ -62,7 +62,7 @@
         "m3.xlarge", "m3.2xlarge",
         "m1.small", "m1.medium", "m1.large", "m1.xlarge",
         "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
-        "c1.xlarge",
+        "c1.medium", "c1.xlarge",
         "cc2.8xlarge",
         "m2.xlarge", "m2.2xlarge", "m2.4xlarge",
         "cr1.8xlarge",
@@ -88,18 +88,43 @@
   },
   "Mappings": {
     "AWSAmazonLinuxAMI": {
-      "us-east-1":      { "name":"Virginia",   "201303": "ami-3275ee5b", "201309": "ami-35792c5c" },
-      "us-west-2":      { "name":"Oregon",     "201303": "ami-ecbe2adc", "201309": "ami-d03ea1e0" },
-      "us-west-1":      { "name":"California", "201303": "ami-66d1fc23", "201309": "ami-687b4f2d" },
-      "eu-west-1":      { "name":"Ireland",    "201303": "ami-44939930", "201309": "ami-149f7863" },
-      "ap-southeast-1": { "name":"Singapole",  "201303": "ami-aa9ed2f8", "201309": "ami-14f2b946" },
-      "ap-southeast-2": { "name":"Sydney",     "201303": "ami-363eaf0c", "201309": "ami-a148d59b" },
-      "ap-northeast-1": { "name":"Tokyo",      "201303": "ami-173fbf16", "201309": "ami-3561fe34" },
-      "sa-east-1":      { "name":"SaoPaulo",   "201303": "ami-dd6bb0c0", "201309": "ami-9f6ec982" }
+      "us-east-1":      { "name":"Virginia",   "64": "ami-35792c5c" , "64HVM" : "ami-69792c00" },
+      "us-west-2":      { "name":"Oregon",     "64": "ami-d03ea1e0" , "64HVM" : "ami-e43ea1d4" },
+      "us-west-1":      { "name":"California", "64": "ami-687b4f2d" , "64HVM" : "ami-4e7b4f0b" },
+      "eu-west-1":      { "name":"Ireland",    "64": "ami-149f7863" , "64HVM" : "ami-209f7857" },
+      "ap-southeast-1": { "name":"Singapole",  "64": "ami-14f2b946" , "64HVM" : "ami-6af2b938" },
+      "ap-southeast-2": { "name":"Sydney",     "64": "ami-a148d59b" , "64HVM" : "ami-a948d593" },
+      "ap-northeast-1": { "name":"Tokyo",      "64": "ami-3561fe34" , "64HVM" : "ami-0961fe08" },
+      "sa-east-1":      { "name":"SaoPaulo",   "64": "ami-9f6ec982" , "64HVM" : "ami-9d6ec980" }
     },
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
       "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" }
+    },
+    "SlaveInstanceSetting": {
+        "m3.xlarge":     { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m3.2xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m1.small":      { "type": "64"    , "HEAP": "-Xms1G -Xmx1G"     ,"NEW": "-XX:NewSize=256m -XX:MaxNewSize=512m" },
+        "m1.medium":     { "type": "64"    , "HEAP": "-Xms2G -Xmx2G"     ,"NEW": "-XX:NewSize=512m -XX:MaxNewSize=1G"   },
+        "m1.large":      { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m1.xlarge":     { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "c3.large":      { "type": "64HVM" , "HEAP": "-Xms2G -Xmx2G"     ,"NEW": "-XX:NewSize=512m -XX:MaxNewSize=1G"   },
+        "c3.xlarge":     { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "c3.2xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "c3.4xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "c3.8xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "c1.medium":     { "type": "64"    , "HEAP": "-Xms1G -Xmx1G"     ,"NEW": "-XX:NewSize=256m -XX:MaxNewSize=512m" },
+        "c1.xlarge":     { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "cc2.8xlarge":   { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m2.xlarge":     { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m2.2xlarge":    { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "m2.4xlarge":    { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "cr1.8xlarge":   { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "hi1.4xlarge":   { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "hs1.8xlarge":   { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "t1.micro":      { "type": "64"    , "HEAP": "-Xms256M -Xmx256M" ,"NEW": "-XX:NewSize=128m -XX:MaxNewSize=128m" },
+        "g2.2xlarge":    { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "cg1.4xlarge":   { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   }
     }
   },
   "Conditions" : {
@@ -269,7 +294,7 @@
         "InstanceType": { "Ref" : "SlaveInstanceType" },
         "SpotPrice" : { "Fn::If" : [ "UseSpotInstance", {"Ref" : "SlaveSpotPrice"},  { "Ref" : "AWS::NoValue" } ] },
         "KeyName": { "Ref" : "KeyName" },
-        "ImageId": { "Fn::FindInMap": [ "AWSAmazonLinuxAMI", { "Ref": "AWS::Region" }, "201309" ]},
+        "ImageId": { "Fn::FindInMap": [ "AWSAmazonLinuxAMI", { "Ref": "AWS::Region" }, { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "type" ]} ]},
         "SecurityGroups": [
           { "Ref" : "SSHSecurityGroup" },
           { "Ref" : "VPCDefaultSecurityGroup" }
@@ -292,6 +317,8 @@
           "/opt/aws/bin/cfn-init -v -s ", { "Ref" : "AWS::StackId" }, " -r SlaveInstanceLaunchConfig ",
           "    --region ", { "Ref" : "AWS::Region" }, "\n",
 
+          "sysctl -p\n",
+
           "echo \"/opt/apache-jmeter-2.10/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
 
           "# All is well so signal success\n",
@@ -309,6 +336,40 @@
             "sources" : {
               "/opt" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.tgz"
             },
+            "files" : {
+              "/etc/security/limits.conf" : {
+                "content" : { "Fn::Join" : ["", [
+                  "# /etc/security/limits.conf\n",
+                  "#\n",
+                  "#Each line describes a limit for a user in the form:\n",
+                  "#\n",
+                  "#\n",
+                  "#<domain>      <type>  <item>         <value>\n",
+                  "#\n",
+                  "\n",
+                  "#*               soft    core            0\n",
+                  "#*               hard    rss             10000\n",
+                  "#@student        hard    nproc           20\n",
+                  "#@faculty        soft    nproc           20\n",
+                  "#@faculty        hard    nproc           50\n",
+                  "#ftp             hard    nproc           0\n",
+                  "#@student        -       maxlogins       4\n",
+                  "\n",
+                  "\n",
+                  "*                hard   nofile           65536\n",
+                  "*                soft   nofile           65536\n",
+                  "*                hard   nproc            8192\n",
+                  "*                soft   nproc            8192\n",
+                  "\n",
+                  "\n",
+                  "\n",
+                  "# End of file\n"
+                ]]},
+                "mode"  : "000644",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
             "commands" : {
               "00-use_java7" : {
                 "command" : "alternatives --set java /usr/lib/jvm/jre-1.7.0-openjdk.x86_64/bin/java"
@@ -324,6 +385,25 @@
                 "command" : { "Fn::Join" : ["", [
                   "sed -i -e \"s/^#RMI_HOST_DEF=-Djava.rmi.server.hostname=.*$/RMI_HOST_DEF=-Djava.rmi.server.hostname=$(curl -s http://169.254.169.254/latest/meta-data/local-hostname)/\" /opt/apache-jmeter-2.10/bin/jmeter-server"
                 ]]}
+              },
+              "03-set_heap" : {
+                "command" : { "Fn::Join" : ["", [
+                  "sed -i -e \"s/^HEAP/#HEAP/ \" -e \" /^#HEAP/i HEAP=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "HEAP" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
+                ]]}
+              },
+              "03-set_new" : {
+                "command" : { "Fn::Join" : ["", [
+                  "sed -i -e \"s/^NEW/#NEW/ \" -e \" /^#NEW/i NEW=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
+                ]]}
+              },
+              "04-tcp_param_tcp_tw_recycle" : {
+                "command" : "echo \"net.ipv4.tcp_tw_recycle = 1\" >> /etc/sysctl.conf"
+              },
+              "04-tcp_param_tcp_fin_timeout" : {
+                "command" : "echo \"net.ipv4.tcp_fin_timeout = 1\" >> /etc/sysctl.conf"
+              },
+              "05-nproc_limit" : {
+                "command" : "sed -i -e \"s/ nproc     1024/ nproc     8192/\" /etc/security/limits.d/90-nproc.conf"
               }
             }
           }
@@ -451,6 +531,14 @@
                   " | Foreach-Object {$_ -replace '^remote_hosts=.*$', (\"remote_hosts=\" + $slaves)}",
                   " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\""
                 ]]}
+              },
+              "c:\\updatejmeter.ps1" : {
+                "content": { "Fn::Join" : ["", [
+                  "(Get-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.bat\") ",
+                  " | Foreach-Object {$_ -replace '^set HEAP=.*$', (\"set HEAP=" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "HEAP" ]} , "\")} ",
+                  " | Foreach-Object {$_ -replace '^set NEW=.*$', (\"set NEW=" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\")} ",
+                  " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.bat\""
+                ]]}
               }
             }
           },
@@ -482,6 +570,13 @@
             "commands" : {
               "setup_jmeter_cluster" : {
                 "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\setupjmetercluster.ps1"
+              }
+            }
+          },
+          "setup_jmeter_jvm" : {
+            "commands" : {
+              "setup_jmeter_jvm_param" : {
+                "command" : "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -WindowStyle Hidden -File c:\\updatejmeter.ps1"
               }
             }
           }
