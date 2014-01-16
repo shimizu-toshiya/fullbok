@@ -99,7 +99,8 @@
     },
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
-      "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" }
+      "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" },
+      "JMeter"            : { "URL": "http://archive.apache.org/dist/jmeter/binaries/apache-jmeter-2.10.tgz" }
     },
     "SlaveInstanceSetting": {
         "m3.xlarge":     { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
@@ -334,7 +335,7 @@
               }
             },
             "sources" : {
-              "/opt" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.tgz"
+              "/opt" : { "Fn::FindInMap" : [ "StackConfig", "JMeter", "URL" ]}
             },
             "files" : {
               "/etc/security/limits.conf" : {
@@ -558,7 +559,7 @@
           },
           "install_jmeter" : {
             "sources" : {
-              "c:\\jmeter" : "http://ftp.riken.jp/net/apache/jmeter/binaries/apache-jmeter-2.10.zip"
+              "c:\\jmeter" : { "Fn::FindInMap" : [ "StackConfig", "JMeter", "URL" ]}
             },
             "commands" : {
               "create_shortcut" : {
