@@ -369,6 +369,9 @@
                   "sed -i -e \"s/^NEW/#NEW/ \" -e \" /^#NEW/i NEW=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
                 ]]}
               },
+              "03-add_disabling_dns_caching" : {
+                "command" : "sed -i -e \" /^java/i JVM_ARGS=\\\"\\$JVM_ARGS -Dsun.net.inetaddr.ttl=0\\\"\" /opt/apache-jmeter-2.10/bin/jmeter"
+              },
               "04-tcp_param_tcp_tw_recycle" : {
                 "command" : "echo \"net.ipv4.tcp_tw_recycle = 1\" >> /etc/sysctl.conf"
               },
