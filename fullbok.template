@@ -279,6 +279,15 @@
           "#! /bin/bash -v\n",
           "yum update -y\n",
 
+          "# Install local dns resolver\n",
+          "yum install -y --enablerepo=epel unbound\n",
+          "sed -i 's/val-permissive-mode: .*/val-permissive-mode: yes/g' /etc/unbound/unbound.conf\n",
+          "echo -e 'forward-zone:\n\tname: ", { "Ref": "AWS::Region" } ,".compute.internal\n\tforward-addr: 10.0.0.2' >> /etc/unbound/unbound.conf\n",
+          "service unbound start\n",
+          "chkconfig unbound on\n",
+          "sed -i 's/PEERDNS=yes/PEERDNS=no/g' /etc/sysconfig/network-scripts/ifcfg-eth0\n",
+          "sed -i 's/nameserver .*/nameserver 127.0.0.1/g' /etc/resolv.conf\n",
+
           "# Helper function\n",
           "function error_exit\n",
           "{\n",
