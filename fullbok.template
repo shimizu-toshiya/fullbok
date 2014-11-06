@@ -279,6 +279,15 @@
           "#! /bin/bash -v\n",
           "yum update -y\n",
 
+          "# Install local dns resolver\n",
+          "yum install -y --enablerepo=epel unbound\n",
+          "sed -i 's/val-permissive-mode: .*/val-permissive-mode: yes/g' /etc/unbound/unbound.conf\n",
+          "echo -e 'forward-zone:\n\tname: ", { "Ref": "AWS::Region" } ,".compute.internal\n\tforward-addr: 10.0.0.2' >> /etc/unbound/unbound.conf\n",
+          "service unbound start\n",
+          "chkconfig unbound on\n",
+          "sed -i 's/PEERDNS=yes/PEERDNS=no/g' /etc/sysconfig/network-scripts/ifcfg-eth0\n",
+          "sed -i 's/nameserver .*/nameserver 127.0.0.1/g' /etc/resolv.conf\n",
+
           "# Helper function\n",
           "function error_exit\n",
           "{\n",
@@ -368,6 +377,9 @@
                 "command" : { "Fn::Join" : ["", [
                   "sed -i -e \"s/^NEW/#NEW/ \" -e \" /^#NEW/i NEW=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
                 ]]}
+              },
+              "03-add_disabling_dns_caching" : {
+                "command" : "sed -i -e \" /^java/i JVM_ARGS=\\\"\\$JVM_ARGS -Dsun.net.inetaddr.ttl=0\\\"\" /opt/apache-jmeter-2.10/bin/jmeter"
               },
               "04-tcp_param_tcp_tw_recycle" : {
                 "command" : "echo \"net.ipv4.tcp_tw_recycle = 1\" >> /etc/sysctl.conf"
@@ -476,7 +488,7 @@
               "c:\\install_jdk.ps1" : {
                 "content": { "Fn::Join" : ["", [
                   "$client = new-object System.Net.WebClient\n",
-                  "$client.Headers.add(\"Cookie\", \"gpw_e24=http%3A%2F%2Fwww.oracle.com\")\n",
+                  "$client.Headers.add(\"Cookie\", \"oraclelicense=accept-securebackup-cookie\")\n",
                   "$client.DownloadFile(\"http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jdk-7u45-windows-x64.exe\", \"C:\\Users\\Administrator\\jdk.exe\")\n",
                   "C:\\Users\\Administrator\\jdk.exe /s /lang=1041 INSTALLDIR=C:\\java\\jdk1.7.45\n",
                   "$env:PATH = $env:PATH + \";C:\\java\\jdk1.7.45\\bin\""
