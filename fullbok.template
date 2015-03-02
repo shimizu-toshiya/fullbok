@@ -75,8 +75,15 @@
       "JMeter"            : { "URL": "http://archive.apache.org/dist/jmeter/binaries/apache-jmeter-2.10.tgz" }
     },
     "SlaveInstanceSetting": {
+        "m3.medium":     { "type": "64HVM" , "HEAP": "-Xms2G -Xmx2G"     ,"NEW": "-XX:NewSize=512m -XX:MaxNewSize=1G"   },
+        "m3.large":      { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
         "m3.xlarge":     { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
         "m3.2xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "r3.large":      { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "r3.xlarge":     { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "r3.2xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "r3.4xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
+        "r3.8xlarge":    { "type": "64HVM" , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
         "m1.small":      { "type": "64"    , "HEAP": "-Xms1G -Xmx1G"     ,"NEW": "-XX:NewSize=256m -XX:MaxNewSize=512m" },
         "m1.medium":     { "type": "64"    , "HEAP": "-Xms2G -Xmx2G"     ,"NEW": "-XX:NewSize=512m -XX:MaxNewSize=1G"   },
         "m1.large":      { "type": "64"    , "HEAP": "-Xms4G -Xmx4G"     ,"NEW": "-XX:NewSize=1G   -XX:MaxNewSize=2G"   },
