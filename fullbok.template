@@ -287,7 +287,8 @@
           "yum update -y\n",
 
           "# Install local dns resolver\n",
-          "yum install -y --enablerepo=epel unbound\n",
+          "printf '[centos-extras]\nname=CentOS-6 - Extras\nmirrorlist=http://mirrorlist.centos.org/?release=6&arch=x86_64&repo=extras\nenabled=0\ngpgcheck=0\n' > /etc/yum.repos.d/CentOS-Extras.repo\n",
+          "yum install -y --enablerepo=centos-extras unbound\n",
           "sed -i 's/val-permissive-mode: .*/val-permissive-mode: yes/g' /etc/unbound/unbound.conf\n",
           "echo -e 'forward-zone:\n\tname: ", { "Ref": "AWS::Region" } ,".compute.internal\n\tforward-addr: 10.0.0.2' >> /etc/unbound/unbound.conf\n",
           "service unbound start\n",
