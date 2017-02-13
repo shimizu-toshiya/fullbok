@@ -286,6 +286,9 @@
           "#! /bin/bash -v\n",
           "yum update -y\n",
 
+          "# Edit limits\n",
+          "echo -e 'ulimit -n 65536\nulimit -u 8192\n' >> /etc/sysconfig/init\n",
+
           "# Install local dns resolver\n",
           "printf '[centos-extras]\nname=CentOS-6 - Extras\nmirrorlist=http://mirrorlist.centos.org/?release=6&arch=x86_64&repo=extras\nenabled=0\ngpgcheck=0\n' > /etc/yum.repos.d/CentOS-Extras.repo\n",
           "yum install -y --enablerepo=centos-extras unbound\n",
@@ -309,6 +312,7 @@
 
           "sysctl -p\n",
 
+          "echo -e 'ulimit -n 65536\nulimit -u 8192\n' >>/etc/rc.local\n",
           "echo \"/opt/apache-jmeter-2.10/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
 
           "# All is well so signal success\n",
@@ -394,9 +398,6 @@
               },
               "04-tcp_param_tcp_fin_timeout" : {
                 "command" : "echo \"net.ipv4.tcp_fin_timeout = 1\" >> /etc/sysctl.conf"
-              },
-              "05-nproc_limit" : {
-                "command" : "sed -i -e \"s/ nproc     1024/ nproc     8192/\" /etc/security/limits.d/90-nproc.conf"
               }
             }
           }
