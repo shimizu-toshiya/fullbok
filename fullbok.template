@@ -72,7 +72,7 @@
     "StackConfig" : {
       "VPC"               : { "CIDR" : "10.0.0.0/16" },
       "JMeterSubnet"      : { "CIDR" : "10.0.0.0/24" },
-      "JMeter"            : { "URL": "http://archive.apache.org/dist/jmeter/binaries/apache-jmeter-2.10.tgz" }
+      "JMeter"            : { "URL": "http://archive.apache.org/dist/jmeter/binaries/apache-jmeter-3.1.tgz" }
     },
     "SlaveInstanceSetting": {
         "m3.medium":     { "type": "64HVM" , "HEAP": "-Xms2G -Xmx2G"     ,"NEW": "-XX:NewSize=512m -XX:MaxNewSize=1G"   },
@@ -315,7 +315,7 @@
           "sysctl -p\n",
 
           "echo -e 'ulimit -n 65536\nulimit -u 8192\n' >>/etc/rc.local\n",
-          "echo \"/opt/apache-jmeter-2.10/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
+          "echo \"/opt/apache-jmeter-3.1/bin/jmeter-server | logger -p daemon.info &\" >>/etc/rc.local\n",
 
           "# All is well so signal success\n",
           "/opt/aws/bin/cfn-signal -e $? -r \"SlaveInstanceLaunchConfig setup complete\" '", { "Ref" : "SlaveWaitHandle" }, "'\n"
@@ -345,21 +345,21 @@
               },
               "03-set_listen_address" : {
                 "command" : { "Fn::Join" : ["", [
-                  "sed -i -e \"s/^#RMI_HOST_DEF=-Djava.rmi.server.hostname=.*$/RMI_HOST_DEF=-Djava.rmi.server.hostname=$(curl -s http://169.254.169.254/latest/meta-data/local-hostname)/\" /opt/apache-jmeter-2.10/bin/jmeter-server"
+                  "sed -i -e \"s/^#RMI_HOST_DEF=-Djava.rmi.server.hostname=.*$/RMI_HOST_DEF=-Djava.rmi.server.hostname=$(curl -s http://169.254.169.254/latest/meta-data/local-hostname)/\" /opt/apache-jmeter-3.1/bin/jmeter-server"
                 ]]}
               },
               "03-set_heap" : {
                 "command" : { "Fn::Join" : ["", [
-                  "sed -i -e \"s/^HEAP/#HEAP/ \" -e \" /^#HEAP/i HEAP=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "HEAP" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
+                  "sed -i -e \"s/^HEAP/#HEAP/ \" -e \" /^#HEAP/i HEAP=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "HEAP" ]} , "\\\" \" /opt/apache-jmeter-3.1/bin/jmeter"
                 ]]}
               },
               "03-set_new" : {
                 "command" : { "Fn::Join" : ["", [
-                  "sed -i -e \"s/^NEW/#NEW/ \" -e \" /^#NEW/i NEW=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\\\" \" /opt/apache-jmeter-2.10/bin/jmeter"
+                  "sed -i -e \"s/^NEW/#NEW/ \" -e \" /^#NEW/i NEW=\\\"" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\\\" \" /opt/apache-jmeter-3.1/bin/jmeter"
                 ]]}
               },
               "03-add_disabling_dns_caching" : {
-                "command" : "sed -i -e \" /^java/i JVM_ARGS=\\\"\\$JVM_ARGS -Dsun.net.inetaddr.ttl=0\\\"\" /opt/apache-jmeter-2.10/bin/jmeter"
+                "command" : "sed -i -e \" /^java/i JVM_ARGS=\\\"\\$JVM_ARGS -Dsun.net.inetaddr.ttl=0\\\"\" /opt/apache-jmeter-3.1/bin/jmeter"
               },
               "04-tcp_param_tcp_tw_recycle" : {
                 "command" : "echo \"net.ipv4.tcp_tw_recycle = 1\" >> /etc/sysctl.conf"
@@ -475,8 +475,8 @@
                 "content": { "Fn::Join" : ["", [
                   "$WshShell = New-Object -comObject WScript.Shell\n",
                   "$shortcut = $WshShell.CreateShortcut(\"C:\\Users\\Administrator\\Desktop\\JMeter.lnk\")\n",
-                  "$shortcut.TargetPath = \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeterw.cmd\"\n",
-                  "$shortcut.WorkingDirectory = \"C:\\jmeter\\apache-jmeter-2.10\\bin\"\n",
+                  "$shortcut.TargetPath = \"C:\\jmeter\\apache-jmeter-3.1\\bin\\jmeterw.cmd\"\n",
+                  "$shortcut.WorkingDirectory = \"C:\\jmeter\\apache-jmeter-3.1\\bin\"\n",
                   "$shortcut.Save()\n"
                 ]]}
               },
@@ -489,17 +489,17 @@
                   " | Get-EC2Instance",
                   " | select -ExpandProperty RunningInstance",
                   " | select -ExpandProperty PrivateIpAddress) -join ','\n",
-                  "(Get-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\")",
+                  "(Get-Content \"C:\\jmeter\\apache-jmeter-3.1\\bin\\jmeter.properties\")",
                   " | Foreach-Object {$_ -replace '^remote_hosts=.*$', (\"remote_hosts=\" + $slaves)}",
-                  " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.properties\""
+                  " | Set-Content \"C:\\jmeter\\apache-jmeter-3.1\\bin\\jmeter.properties\""
                 ]]}
               },
               "c:\\updatejmeter.ps1" : {
                 "content": { "Fn::Join" : ["", [
-                  "(Get-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.bat\") ",
+                  "(Get-Content \"C:\\jmeter\\apache-jmeter-3.1\\bin\\jmeter.bat\") ",
                   " | Foreach-Object {$_ -replace '^set HEAP=.*$', (\"set HEAP=" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "HEAP" ]} , "\")} ",
                   " | Foreach-Object {$_ -replace '^set NEW=.*$', (\"set NEW=" , { "Fn::FindInMap": [ "SlaveInstanceSetting", { "Ref": "SlaveInstanceType" }, "NEW" ]} , "\")} ",
-                  " | Set-Content \"C:\\jmeter\\apache-jmeter-2.10\\bin\\jmeter.bat\""
+                  " | Set-Content \"C:\\jmeter\\apache-jmeter-3.1\\bin\\jmeter.bat\""
                 ]]}
               }
             }
