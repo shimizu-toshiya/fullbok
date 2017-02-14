@@ -286,9 +286,6 @@
           "#! /bin/bash -v\n",
           "yum update -y\n",
 
-          "# Edit limits\n",
-          "echo -e 'ulimit -n 65536\nulimit -u 8192\n' >> /etc/sysconfig/init\n",
-
           "# Install local dns resolver\n",
           "printf '[centos-extras]\nname=CentOS-6 - Extras\nmirrorlist=http://mirrorlist.centos.org/?release=6&arch=x86_64&repo=extras\nenabled=0\ngpgcheck=0\n' > /etc/yum.repos.d/CentOS-Extras.repo\n",
           "yum install -y --enablerepo=centos-extras unbound\n",
@@ -329,40 +326,6 @@
             },
             "sources" : {
               "/opt" : { "Fn::FindInMap" : [ "StackConfig", "JMeter", "URL" ]}
-            },
-            "files" : {
-              "/etc/security/limits.conf" : {
-                "content" : { "Fn::Join" : ["", [
-                  "# /etc/security/limits.conf\n",
-                  "#\n",
-                  "#Each line describes a limit for a user in the form:\n",
-                  "#\n",
-                  "#\n",
-                  "#<domain>      <type>  <item>         <value>\n",
-                  "#\n",
-                  "\n",
-                  "#*               soft    core            0\n",
-                  "#*               hard    rss             10000\n",
-                  "#@student        hard    nproc           20\n",
-                  "#@faculty        soft    nproc           20\n",
-                  "#@faculty        hard    nproc           50\n",
-                  "#ftp             hard    nproc           0\n",
-                  "#@student        -       maxlogins       4\n",
-                  "\n",
-                  "\n",
-                  "*                hard   nofile           65536\n",
-                  "*                soft   nofile           65536\n",
-                  "*                hard   nproc            8192\n",
-                  "*                soft   nproc            8192\n",
-                  "\n",
-                  "\n",
-                  "\n",
-                  "# End of file\n"
-                ]]},
-                "mode"  : "000644",
-                "owner" : "root",
-                "group" : "root"
-              }
             },
             "commands" : {
               "00-use_java7" : {
